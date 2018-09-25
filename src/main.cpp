@@ -24,6 +24,7 @@
 */
 
 #include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
 #include <PubSubClient.h>
 
 #include <DNSServer.h>
@@ -133,104 +134,34 @@ void setup() {
   client.setCallback(callback);
   client.publish("test", "ledringklok online");
 }
-void loop() {
 
-  if (!client.connected()) {
-    reconnect();
+
+void raincheck() {
+
+if(WiFi.status()== WL_CONNECTED){ //Check WiFi connection status
+  
+    HTTPClient http; //Declare an object of class HTTPClient
+    http.begin("http://gpsgadget.buienradar.nl/data/raintext?lat=53.24&lon=6.53"); //Specify request destination
+    int httpCode = http.GET(); //Send the request
+    if (httpCode > 0) { //Check the returning code
+      String payload = http.getString(); //Get the request response payload
+      Serial.println(payload); //Print the response payload
+    }
+    http.end(); //Close connection
+  } else {
+    Serial.println("Error in WiFi connection");   
   }
-  client.loop();
-
-//   long now = millis();
-//   if (now - lastMsg > 2000) {
-//     lastMsg = now;
-//     ++value;
-//     snprintf (msg, 75, "hello world #%ld", value);
-//     Serial.print("Publish message: ");
-//     Serial.println(msg);
-//     client.publish("test", msg);
-//   }
 }
 
-// #include <ESP8266WiFi.h>          //https://github.com/esp8266/Arduino
 
-// //needed for library
-// #include <DNSServer.h>
-// #include <ESP8266WebServer.h>
-// #include <WiFiManager.h>         //https://github.com/tzapu/WiFiManager
+void loop() {
 
-// //mqtt
+  // if (!client.connected()) {
+  //   reconnect();
+  // }
+  // client.loop();
 
-// #include <SPI.h>
-// #include <Ethernet.h>
-// #include <PubSubClient.h>
+  raincheck();
+  delay(30000); //Send a request every 30 seconds
 
-// // Update these with values suitable for your network.
-// byte mac[]    = {  0xDE, 0xED, 0xBA, 0xFE, 0xFE, 0xED };
-// IPAddress ip(192, 168, 0, 148);
-// IPAddress server(192, 168, 0, 3);
-
-// void callback(char* topic, byte* payload, unsigned int length) {
-//   // handle message arrived********
-//   Serial.println("mqtt bericht");
-
-// }
-
-// EthernetClient ethClient;
-// PubSubClient client(server, 1883, ethClient);
-
-
-// void setup() {
-//     // put your setup code here, to run once:
-//     Serial.begin(115200);
-// Serial.println("moi eem'");
-//     //WiFiManager
-//     //Local intialization. Once its business is done, there is no need to keep it around
-//     WiFiManager wifiManager;
-//     //reset saved settings
-//     //wifiManager.resetSettings();
-    
-//     //set custom ip for portal
-//     //wifiManager.setAPConfig(IPAddress(10,0,1,1), IPAddress(10,0,1,1), IPAddress(255,255,255,0));
-
-//     //fetches ssid and pass from eeprom and tries to connect
-//     //if it does not connect it starts an access point with the specified name
-//     //here  "AutoConnectAP"
-//     //and goes into a blocking loop awaiting configuration
-//     wifiManager.autoConnect("Ledringklok");
-//     //or use this for auto generated name ESP + ChipID
-//     //wifiManager.autoConnect();
-
-    
-//     //if you get here you have connected to the WiFi
-//     Serial.println("connected...yeey :)");
-
-//     //mqtt
-//       Ethernet.begin(mac, ip);
-//   // Note - the default maximum packet size is 128 bytes. If the
-//   // combined length of clientId, username and password exceed this,
-//   // you will need to increase the value of MQTT_MAX_PACKET_SIZE in
-//   // PubSubClient.h
-  
-//   if (client.connect("ledringklok")) {
-//       Serial.println("subscribed");
-//     client.publish("test","hello world");
-//     client.subscribe("test");
-//   }
-// Serial.println("dit was de setup!");
-// }
-
-// /*
-//  Basic MQTT example with Authentication
-
-//   - connects to an MQTT server, providing username
-//     and password
-//   - publishes "hello world" to the topic "outTopic"
-//   - subscribes to the topic "inTopic"
-// */
-
-
-// void loop()
-// {
-//   client.loop();
-//   Serial.println(client.state());
-// }
+}
