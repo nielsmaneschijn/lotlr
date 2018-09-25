@@ -45,6 +45,28 @@ int value = 0;
 float temp;
 float solar;
 
+
+// leds
+#include <NeoPixelBus.h>
+
+const uint16_t PixelCount = 16; // this example assumes 4 pixels, making it smaller will cause a failure
+const uint8_t PixelPin = 2;  // make sure to set this to the correct pin, ignored for Esp8266
+
+#define colorSaturation 64
+
+// three element pixels, in different order and speeds
+NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount, PixelPin);
+// NeoPixelBus<NeoRgbFeature, Neo800KbpsMethod> strip(PixelCount, PixelPin);
+
+RgbColor red(colorSaturation, 0, 0);
+RgbColor pink(colorSaturation, 0, colorSaturation);
+RgbColor yellow(colorSaturation, colorSaturation, 0);
+RgbColor purple(colorSaturation/4, 0, colorSaturation);
+RgbColor green(0, colorSaturation, 0);
+RgbColor blue(0, 0, colorSaturation);
+RgbColor white(colorSaturation);
+RgbColor black(0);
+
 void setup_wifi() {
   WiFiManager wifiManager;
   wifiManager.autoConnect("Ledringklok");
@@ -133,10 +155,17 @@ void setup() {
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
   client.publish("test", "ledringklok online");
+
+  //leds
+      // this resets all the neopixels to an off state
+    strip.Begin();
+    strip.Show();
+
 }
 
 
-void raincheck() {
+bool raincheck() {
+ bool somerain = false;
 
 if(WiFi.status()== WL_CONNECTED){ //Check WiFi connection status
   
@@ -146,13 +175,29 @@ if(WiFi.status()== WL_CONNECTED){ //Check WiFi connection status
     if (httpCode > 0) { //Check the returning code
       String payload = http.getString(); //Get the request response payload
       Serial.println(payload); //Print the response payload
+
+      // read first 6 lines
+      for (int x=0; x<6; x++) {
+        Serial.println(payload.substring(x*11, (x*11)+3));
+        somerain = somerain || payload.substring(x*11, (x*11)+3) != "000";
+      }
+      Serial.println(somerain ? "rain" : "no rain");
     }
+
     http.end(); //Close connection
   } else {
     Serial.println("Error in WiFi connection");   
   }
+  return somerain;
 }
 
+
+void paint(RgbColor color) {
+    for (int x=0; x<PixelCount; x++) {
+      strip.SetPixelColor(x, color); 
+    }
+    strip.Show();
+}
 
 void loop() {
 // geen mqtt op kantoor
@@ -161,8 +206,15 @@ void loop() {
   // }
   // client.loop();
 
-  raincheck();
-  delay(300000); //Send a request every 30 seconds
+  if (raincheck()) {
+    paint(blue);
+    digitalWrite(BUILTIN_LED, 0);
+  } else {
+    paint(green);
+    digitalWrite(BUILTIN_LED, 1);
+  }
+  
+  delay(300000); //Send a request every 300 seconds
 
 }
 
