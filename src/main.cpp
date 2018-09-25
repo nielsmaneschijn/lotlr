@@ -155,13 +155,14 @@ if(WiFi.status()== WL_CONNECTED){ //Check WiFi connection status
 
 
 void loop() {
-
+// geen mqtt op kantoor
   // if (!client.connected()) {
   //   reconnect();
   // }
   // client.loop();
 
   raincheck();
-  delay(30000); //Send a request every 30 seconds
+  delay(300000); //Send a request every 30 seconds
 
 }
+
