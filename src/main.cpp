@@ -1,4 +1,10 @@
+
 /*
+TODO 
+- geel als leeg bericht/html fout (of laatste status?)
+- power save mode na 18u
+- knipperen bij statusverandering
+
  Basic ESP8266 MQTT example
 
  This sketch demonstrates the capabilities of the pubsub library in combination
@@ -30,10 +36,7 @@
 #include <DNSServer.h>
 #include <ESP8266WebServer.h>
 #include <WiFiManager.h>  
-// Update these with values suitable for your network.
 
-// const char* ssid = "*";
-// const char* password = "*";
 const char* mqtt_server = "192.168.0.3";
 
 WiFiClient espClient;
@@ -49,7 +52,7 @@ float solar;
 // leds
 #include <NeoPixelBus.h>
 
-const uint16_t PixelCount = 16; // this example assumes 4 pixels, making it smaller will cause a failure
+const uint16_t PixelCount = 16;
 const uint8_t PixelPin = 2;  // make sure to set this to the correct pin, ignored for Esp8266
 
 #define colorSaturation 64
@@ -67,26 +70,14 @@ RgbColor blue(0, 0, colorSaturation);
 RgbColor white(colorSaturation);
 RgbColor black(0);
 
+int hour = 12;
+const int poweron = 9; //turn leds on at 9 o'clock
+const int poweroff = 18; //off at six
+
 void setup_wifi() {
   WiFiManager wifiManager;
   wifiManager.autoConnect("Ledringklok");
   
-//   delay(10);
-//   // We start by connecting to a WiFi network
-//   Serial.println();
-//   Serial.print("Connecting to ");
-//   Serial.println(ssid);
-
-//   WiFi.begin(ssid, password);
-
-//   while (WiFi.status() != WL_CONNECTED) {
-//     delay(500);
-//     Serial.print(".");
-//   }
-
-//   Serial.println("");
-//   Serial.println("WiFi connected");
-//   Serial.println("IP address: ");
 //   Serial.println(WiFi.localIP());
 }
 
@@ -163,6 +154,18 @@ void setup() {
 
 }
 
+boolean powersave() {
+  return hour < poweron || hour >= poweroff; 
+}
+
+void paint(RgbColor color) {
+  if (powersave()) { color = black;}
+
+    for (int x=0; x<PixelCount; x++) {
+      strip.SetPixelColor(x, color); 
+    }
+    strip.Show();
+}
 
 bool raincheck() {
  bool somerain = false;
@@ -170,9 +173,9 @@ bool raincheck() {
 if(WiFi.status()== WL_CONNECTED){ //Check WiFi connection status
   
     HTTPClient http; //Declare an object of class HTTPClient
-    http.begin("http://gpsgadget.buienradar.nl/data/raintext?lat=53.24&lon=6.53"); //Specify request destination
+    http.begin("http://gpsgadget.buienradar.nl/data/raintext/?lat=53.19&lon=6.56"); //Specify request destination
     int httpCode = http.GET(); //Send the request
-    if (httpCode > 0) { //Check the returning code
+    if (httpCode == 200) { //Check the returning code
       String payload = http.getString(); //Get the request response payload
       Serial.println(payload); //Print the response payload
 
@@ -182,22 +185,23 @@ if(WiFi.status()== WL_CONNECTED){ //Check WiFi connection status
         somerain = somerain || payload.substring(x*11, (x*11)+3) != "000";
       }
       Serial.println(somerain ? "rain" : "no rain");
+
+      hour = payload.substring(4,6).toInt();
+      Serial.println(hour);
+    } else {
+      paint(yellow);
+      delay(2000);
     }
 
     http.end(); //Close connection
   } else {
     Serial.println("Error in WiFi connection");   
+    paint(purple);
+    delay(2000);
   }
   return somerain;
 }
 
-
-void paint(RgbColor color) {
-    for (int x=0; x<PixelCount; x++) {
-      strip.SetPixelColor(x, color); 
-    }
-    strip.Show();
-}
 
 void loop() {
 // geen mqtt op kantoor
