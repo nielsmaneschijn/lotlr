@@ -1,9 +1,9 @@
 
 /*
 TODO 
-- geel als leeg bericht/html fout (of laatste status?)
-- power save mode na 18u
 - knipperen bij statusverandering
+- http server voor debug info
+- klok etc
 
  Basic ESP8266 MQTT example
 
@@ -175,7 +175,7 @@ if(WiFi.status()== WL_CONNECTED){ //Check WiFi connection status
     HTTPClient http; //Declare an object of class HTTPClient
     http.begin("http://gpsgadget.buienradar.nl/data/raintext/?lat=53.19&lon=6.56"); //Specify request destination
     int httpCode = http.GET(); //Send the request
-    if (httpCode == 200) { //Check the returning code
+    if (httpCode == 200 ) { //Check the returning code // && http.getString().length() > 66
       String payload = http.getString(); //Get the request response payload
       Serial.println(payload); //Print the response payload
 
@@ -190,14 +190,14 @@ if(WiFi.status()== WL_CONNECTED){ //Check WiFi connection status
       Serial.println(hour);
     } else {
       paint(yellow);
-      delay(2000);
+      delay(5000);
     }
 
     http.end(); //Close connection
   } else {
     Serial.println("Error in WiFi connection");   
     paint(purple);
-    delay(2000);
+    delay(5000);
   }
   return somerain;
 }
