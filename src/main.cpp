@@ -187,8 +187,8 @@ bool raincheck() {
 
 if(WiFi.status()== WL_CONNECTED){ //Check WiFi connection status
   
-    time_t nu = elapsedSecsToday(NTP.getTime());
-    time_t straks = nu + 1800;
+    time_t nu = elapsedSecsToday(NTP.getTime()) - 300;
+    time_t straks = nu + 2100;
 
     HTTPClient http; //Declare an object of class HTTPClient
     http.begin("http://gpsgadget.buienradar.nl/data/raintext/?lat=53.19&lon=6.56"); //Specify request destination
