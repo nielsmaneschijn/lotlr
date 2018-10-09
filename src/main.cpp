@@ -36,6 +36,8 @@ TODO
 #include <DNSServer.h>
 #include <ESP8266WebServer.h>
 #include <WiFiManager.h>  
+#include <TimeLib.h> //TimeLib library is needed https://github.com/PaulStoffregen/Time
+#include <NtpClientLib.h> //Include NtpClient library header
 
 const char* mqtt_server = "192.168.0.3";
 
@@ -70,7 +72,7 @@ RgbColor blue(0, 0, colorSaturation);
 RgbColor white(colorSaturation);
 RgbColor black(0);
 
-int hour = 12;
+// int hourr = 12;
 const int poweron = 9; //turn leds on at 9 o'clock
 const int poweroff = 18; //off at six
 
@@ -147,6 +149,14 @@ void setup() {
   client.setCallback(callback);
   client.publish("test", "ledringklok online");
 
+  // NTP begin with default parameters:
+	//   NTP server: pool.ntp.org
+	//   TimeZone: UTC
+	//   Daylight saving: off
+	// NTP.begin (); // Only statement needed to start NTP sync.
+        NTP.begin ("pool.ntp.org", 1, true, 0);
+        NTP.setInterval (63);
+
   //leds
       // this resets all the neopixels to an off state
     strip.Begin();
@@ -155,7 +165,7 @@ void setup() {
 }
 
 boolean powersave() {
-  return hour < poweron || hour >= poweroff; 
+  return hour() < poweron || hour() >= poweroff; 
 }
 
 void paint(RgbColor color) {
@@ -167,11 +177,19 @@ void paint(RgbColor color) {
     strip.Show();
 }
 
+time_t decode(String hrs, String min) {
+  return 3600 * (hrs.toInt()) + 60 * (min.toInt());
+  }
+
 bool raincheck() {
+  //Neerslagintensiteit = 10^((waarde-109)/32)
  bool somerain = false;
 
 if(WiFi.status()== WL_CONNECTED){ //Check WiFi connection status
   
+    time_t nu = elapsedSecsToday(NTP.getTime());
+    time_t straks = nu + 1800;
+
     HTTPClient http; //Declare an object of class HTTPClient
     http.begin("http://gpsgadget.buienradar.nl/data/raintext/?lat=53.19&lon=6.56"); //Specify request destination
     int httpCode = http.GET(); //Send the request
@@ -179,15 +197,15 @@ if(WiFi.status()== WL_CONNECTED){ //Check WiFi connection status
       String payload = http.getString(); //Get the request response payload
       Serial.println(payload); //Print the response payload
 
-      // read first 6 lines
-      for (int x=0; x<6; x++) {
-        Serial.println(payload.substring(x*11, (x*11)+3));
-        somerain = somerain || payload.substring(x*11, (x*11)+3) != "000";
+      // read 24 lines
+      for (int x=0; x<24; x++) {
+        time_t linetime = decode(payload.substring((x*11)+4, (x*11)+6), payload.substring((x*11)+7, (x*11)+9));
+        if (linetime > nu && linetime < straks) {
+          Serial.println(payload.substring((x*11)+4, (x*11)+9));
+          somerain = somerain || payload.substring(x*11, (x*11)+3) != "000";
+        }
       }
       Serial.println(somerain ? "rain" : "no rain");
-
-      hour = payload.substring(4,6).toInt();
-      Serial.println(hour);
     } else {
       paint(yellow);
       delay(5000);
@@ -210,6 +228,10 @@ void loop() {
   // }
   // client.loop();
 
+Serial.println (NTP.getTimeDateString()); 
+// Serial.println(NTP.getLastNTPSync());
+
+
   if (raincheck()) {
     paint(blue);
     digitalWrite(BUILTIN_LED, 0);
@@ -218,7 +240,7 @@ void loop() {
     digitalWrite(BUILTIN_LED, 1);
   }
   
-  delay(300000); //Send a request every 300 seconds
+  delay(30000); //Send a request every 300 seconds
 
 }
 
