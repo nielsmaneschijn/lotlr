@@ -78,7 +78,7 @@ const int poweroff = 18; //off at six
 
 void setup_wifi() {
   WiFiManager wifiManager;
-  wifiManager.autoConnect("Ledringklok");
+  wifiManager.autoConnect("Pretty fly for a wifi");
   
 //   Serial.println(WiFi.localIP());
 }
