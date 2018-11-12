@@ -66,7 +66,8 @@ NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount, PixelPin);
 RgbColor red(colorSaturation, 0, 0);
 RgbColor pink(colorSaturation, 0, colorSaturation);
 RgbColor yellow(colorSaturation, colorSaturation, 0);
-RgbColor purple(colorSaturation/4, 0, colorSaturation);
+RgbColor orange(colorSaturation, colorSaturation/2, 0);
+RgbColor purple(colorSaturation/8, 0, colorSaturation);
 RgbColor green(0, colorSaturation, 0);
 RgbColor blue(0, 0, colorSaturation);
 RgbColor white(colorSaturation);
@@ -155,7 +156,7 @@ void setup() {
 	//   Daylight saving: off
 	// NTP.begin (); // Only statement needed to start NTP sync.
         NTP.begin ("pool.ntp.org", 1, true, 0);
-        NTP.setInterval (63);
+        // NTP.setInterval (63);
 
   //leds
       // this resets all the neopixels to an off state
@@ -177,47 +178,84 @@ void paint(RgbColor color) {
     strip.Show();
 }
 
+void error(RgbColor color) {
+  // 3 manieren om een fout af te handelen:
+  // 1: doe niks -> de laatste kleur blijft staan
+  
+  // 2: in geval van twijfel -> niks tonen. paint it black!
+  //  paint(black);
+
+  // 3: informatieve maar irritante kleurtjes
+  paint(color);
+}
+
 time_t decode(String hrs, String min) {
   return 3600 * (hrs.toInt()) + 60 * (min.toInt());
   }
 
-bool raincheck() {
+void raincheck() {
   //Neerslagintensiteit = 10^((waarde-109)/32)
  bool somerain = false;
 
 if(WiFi.status()== WL_CONNECTED){ //Check WiFi connection status
   
-    time_t nu = elapsedSecsToday(NTP.getTime()) - 300;
-    time_t straks = nu + 2100;
+    time_t ntpTime = NTP.getTime();
+    if (ntpTime > 0) {
+      time_t nu = elapsedSecsToday(ntpTime) - 300;
+      time_t straks = nu + 2100;
 
-    HTTPClient http; //Declare an object of class HTTPClient
-    http.begin("http://gpsgadget.buienradar.nl/data/raintext/?lat=53.19&lon=6.56"); //Specify request destination
-    int httpCode = http.GET(); //Send the request
-    if (httpCode == 200 ) { //Check the returning code // && http.getString().length() > 66
-      String payload = http.getString(); //Get the request response payload
-      Serial.println(payload); //Print the response payload
+      Serial.print("getTime: ");
+      Serial.println(NTP.getTime());
+      Serial.print("nu: ");
+      Serial.println(nu);
+      Serial.print("straks: ");
+      Serial.println(straks);
 
-      // read 24 lines
-      for (int x=0; x<24; x++) {
-        time_t linetime = decode(payload.substring((x*11)+4, (x*11)+6), payload.substring((x*11)+7, (x*11)+9));
-        if (linetime > nu && linetime < straks) {
-          Serial.println(payload.substring((x*11)+4, (x*11)+9));
-          somerain = somerain || payload.substring(x*11, (x*11)+3) != "000";
+      HTTPClient http; //Declare an object of class HTTPClient
+      http.begin("http://gpsgadget.buienradar.nl/data/raintext/?lat=53.19&lon=6.56"); //Specify request destination
+      int httpCode = http.GET(); //Send the request
+      if (httpCode == 200 ) { //Check the returning code // && http.getString().length() > 66
+        String payload = http.getString(); //Get the request response payload
+        Serial.println(payload); //Print the response payload
+        boolean lineFound = false;
+
+        // read 24 lines
+        for (int x=0; x<24; x++) {
+          time_t linetime = decode(payload.substring((x*11)+4, (x*11)+6), payload.substring((x*11)+7, (x*11)+9));
+          if (linetime > nu && linetime < straks) {
+            lineFound = true;
+            Serial.println(payload.substring((x*11)+4, (x*11)+9));
+            somerain = somerain || payload.substring(x*11, (x*11)+3) != "000";
+          }
         }
+        if (lineFound) {
+          Serial.println(somerain ? "rain" : "no rain");
+          if (somerain) {
+            paint(blue);
+            digitalWrite(BUILTIN_LED, 0);
+          } else {
+            paint(green);
+            digitalWrite(BUILTIN_LED, 1);
+          } 
+        } else {
+            Serial.println("no data :(");
+            error(orange);
+        }
+        
+      } else {
+        Serial.println("geen http 200");   
+        error(yellow);
       }
-      Serial.println(somerain ? "rain" : "no rain");
-    } else {
-      paint(yellow);
-      delay(5000);
-    }
 
-    http.end(); //Close connection
+      http.end(); //Close connection
+    } else {
+      Serial.println("NTP bork");   
+      error(pink);
+    }
   } else {
     Serial.println("Error in WiFi connection");   
-    paint(purple);
-    delay(5000);
+    error(white);
   }
-  return somerain;
 }
 
 
@@ -229,18 +267,9 @@ void loop() {
   // client.loop();
 
 Serial.println (NTP.getTimeDateString()); 
-// Serial.println(NTP.getLastNTPSync());
 
-
-  if (raincheck()) {
-    paint(blue);
-    digitalWrite(BUILTIN_LED, 0);
-  } else {
-    paint(green);
-    digitalWrite(BUILTIN_LED, 1);
-  }
-  
-  delay(30000); //Send a request every 300 seconds
+raincheck();
+delay(30000); //Send a request every 300 seconds
 
 }
 
