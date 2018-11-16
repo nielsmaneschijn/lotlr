@@ -2,6 +2,13 @@
 Maak je eigen buienradarlamp!
 
 # Instructies
+Hardware:
+- Bedenk of je de ring rechtstreeks aan de module vast wilt solderen, of dat je pinheaders wilt gebruiken met jumper kabeltjes. Dat laatste is handig als je ook nog verder wilt spelen met schermpjes of sensors.
+- Verbind de Wemos D1 mini module als volgt met je ledring:
+5V -> +5 (voedingsspanning) (rood draadje)
+G -> - (ground) (zwart draadje)
+RX -> DI (data in) (geel draadje)
+
 Installeren ontwikkeltools:
 - Installeer PlatformIO volgens de instructies hier: https://platformio.org/platformio-ide (klik op Install for VSCode). Atom kan ook maar werd ik minder blij van.
 - installeer de NeoPixelBus en NtpClientLib libraries onder PIO Home -> Libraries -> Registry 
