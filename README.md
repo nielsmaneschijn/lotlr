@@ -25,3 +25,9 @@ Installeren ontwikkeltools:
 - als de ESP geen netwerk kan vinden start hij op in de wifi access point mode (dankzij Wifimanager). Connect met dit access point (als het goed is redirect je automatisch naar 192.168.4.1) en vul de credentials van het wifi netwerk in. 
 - hierna reboot de ESP en als alles goed gegaan is is je buienradarlamp online!
 - als je op het stekker icoontje klikt open je een debug terminal en kan je meekijken met de debug info (Serial.println()).
+
+Werkt alles? Dan kan je zelf verder aan de slag!
+Suggesties:
+- de NeoPixelBus library heeft uitgebreide mogelijkheden voor animaties, bekijk de examples hiervoor
+- het is niet handig om steeds firmware updates via USB te moeten doen, dit kan ook via het netwerk. Bekijk hiervoor de EasyOTA library.
+- voeg een http server toe zodat je zelf een kleur kunt kiezen (pak aan, Philips Hue!)
