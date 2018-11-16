@@ -2,9 +2,10 @@
 /*
 TODO 
 - knipperen bij statusverandering
-- http server voor debug info
+- http server voor debug info/kleur zelf instellen
 - klok modus
-- animaties
+- animaties (zie https://github.com/Makuna/NeoPixelBus/wiki/NeoPixelAnimator-object)
+- OTA update met EasyOTA
 - etc etc
 */
 
