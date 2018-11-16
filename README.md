@@ -11,7 +11,7 @@ RX -> DI (data in) (geel draadje)
 
 Installeren ontwikkeltools:
 - Installeer PlatformIO volgens de instructies hier: https://platformio.org/platformio-ide (klik op Install for VSCode). Atom kan ook maar werd ik minder blij van.
-- installeer de NeoPixelBus en NtpClientLib libraries onder PIO Home -> Libraries -> Registry 
+- installeer de NeoPixelBus en NtpClientLib libraries onder PIO Home -> Libraries -> Registry. Bekijk ook even de examples aldaar, de meeste libraries hebben goede voorbeelden.
 - installeer espressif8266 onder Platforms
 - installeer d1_mini onder Boards
 - clone deze repo ergens: git clone https://github.com/nielsmaneschijn/lotlr.git (alternatief als je geen git geïnstalleerd hebt: download de zip van https://github.com/nielsmaneschijn/lotlr/archive/master.zip)
