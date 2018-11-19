@@ -25,9 +25,9 @@ const uint8_t PixelPin = 2;  // op de Esp8266 altijd de RX pin
 
 // geef dit een unieke naam als je je device wilt kunnen herkennen!
 #define SSID "Pretty fly for a wifi"
-// stel hier de coordinaten van je crib in!
-#define LAT 53.19
-#define LON 6.56
+// stel hier de coordinaten van je crib in! (2 decimalen achter de komma)
+#define LAT "53.19"
+#define LON "6.56"
 
 // er zijn verschillende constructors voor verschillende varianten leds, met name de volgorde van de kleuren
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> ring(PixelCount, PixelPin); // GRB!
@@ -35,7 +35,7 @@ NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> ring(PixelCount, PixelPin); // GRB!
 
 // wat prefab kleurtjes
 RgbColor red(colorSaturation, 0, 0);
-RgbColor pink(colorSaturation, 0, colorSaturation);
+RgbColor pink(colorSaturation, 0, colorSaturation/2);
 RgbColor yellow(colorSaturation, colorSaturation, 0);
 RgbColor orange(colorSaturation, colorSaturation/2, 0);
 RgbColor purple(colorSaturation/8, 0, colorSaturation);
@@ -123,7 +123,7 @@ void raincheck() {
       time_t straks = nu + 2100;
 
       HTTPClient http; //Declare an object of class HTTPClient
-      http.begin("http://gpsgadget.buienradar.nl/data/raintext/?lat=LAT&lon=LON"); //Specify request destination
+      http.begin("http://gpsgadget.buienradar.nl/data/raintext/?lat=" + LAT + "&lon=" + LON); //Specify request destination
       int httpCode = http.GET(); //Send the request
       if (httpCode == 200 ) { //Check the returning code 
         String payload = http.getString(); //Get the request response payload
