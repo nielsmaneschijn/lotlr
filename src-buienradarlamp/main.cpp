@@ -50,11 +50,11 @@ RgbColor white(colorSaturation);
 RgbColor black(0);
 
 // kleur als het niet regent
-RgbColor allclear = black;
+RgbColor allclear = green;
 
 // wanneer staat 'ie aan
 const int poweron = 7; //aan om 7u
-const int poweroff = 23; //uit om 23u
+const int poweroff = 24; //uit om 23u
 
 // totaal regenintensiteit in vage log eenheid
 int totalrain = 0;
@@ -132,6 +132,7 @@ void error(RgbColor color) {
 
   // 3: informatieve maar irritante kleurtjes
   paint(color);
+  delay(3000);
 }
 
 // de timestamps van buienradar terugrekenen naar seconden sinds middernacht
@@ -251,6 +252,7 @@ void loop() {
   } else {
     delay(30000); //wacht 30 seconden en goto 10! kleur is al gezet in raincheck
     // API data ververst slechts elke 300 sec dus kan best minder vaak
+    paint(black); // voor als het nog regent als het power save interval ingaat, of als er dan gereset wordt
   }
 }
 
