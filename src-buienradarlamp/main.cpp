@@ -4,7 +4,7 @@ TODO
 - knipperen bij statusverandering
 - http server voor debug info/kleur zelf instellen
 - klok modus
-- animaties (zie https://github.com/Makuna/NeoPixelBus/wiki/NeoPixelAnimator-object)
+- meer animaties (zie https://github.com/Makuna/NeoPixelBus/wiki/NeoPixelAnimator-object)
 - OTA update met EasyOTA
 - etc etc
 */
@@ -13,10 +13,11 @@ TODO
 #include <ESP8266HTTPClient.h>
 // wifimanager maakt een access point om je wifi credentials mee in te kunnen stellen
 #include <WiFiManager.h>  
-// NTP client om de tijd op te halen
+// NTP client om de tijd op te halen (hier krijg je Time.h bij)
 #include <NtpClientLib.h>
 // ws2812b ledstrip/ring
 #include <NeoPixelBus.h>
+#include <NeoPixelAnimator.h>
 
 const uint16_t PixelCount = 12; // aantal leds
 const uint8_t PixelPin = 2;  // op de Esp8266 altijd de RX pin
@@ -26,10 +27,14 @@ const uint8_t PixelPin = 2;  // op de Esp8266 altijd de RX pin
 // geef dit een unieke naam als je je device wilt kunnen herkennen!
 const char* SSID = "Pretty fly for a wifi";
 // stel hier de coordinaten van je crib in! (2 decimalen achter de komma)
-const String LAT = "53.19";
-const String LON = "6.56";
+//Wolddijk
+const String LAT = "53.25";
+const String LON = "6.57";
+//Enshore HQ
+// const String LAT = "53.19";
+// const String LON = "6.56";
 
-// er zijn verschillende constructors voor verschillende varianten leds, met name de volgorde van de kleuren
+// er zijn verschillende constructors voor verschillende varianten leds, met name de volgorde van de kleuren (ook de datapin hangt hiervan af)
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> ring(PixelCount, PixelPin); // GRB!
 // NeoPixelBus<NeoRgbFeature, Neo800KbpsMethod> ring(PixelCount, PixelPin); // RGB!
 
@@ -44,9 +49,23 @@ RgbColor blue(0, 0, colorSaturation);
 RgbColor white(colorSaturation);
 RgbColor black(0);
 
+// kleur als het niet regent
+RgbColor allclear = black;
+
 // wanneer staat 'ie aan
 const int poweron = 7; //aan om 7u
 const int poweroff = 23; //uit om 23u
+
+// totaal regenintensiteit in vage log eenheid
+int totalrain = 0;
+// totaal regenintensiteit mm/u (eigenlijk 6x teveel)
+float totalrainmm = 0;
+
+// gaat het keihard regenen?
+boolean codered = false;
+
+// NeoPixel animation time management object
+NeoPixelAnimator animations(PixelCount, NEO_MILLISECONDS);
 
 void setup_wifi() {
   // maak een access point om je wifi netwerk in te kunnen stellen
@@ -59,19 +78,29 @@ void setup_wifi() {
 
 // arduino conventie: setup() wordt bij boot eenmalig uitgevoerd
 void setup() {
+  
   // Initialize the BUILTIN_LED pin as an output
   pinMode(BUILTIN_LED, OUTPUT);     
+
   // seriele poort openzetten voor debug data (zorg dat je terminal dezelfde baudrate gebruikt)
   Serial.begin(115200);
+  
+  //ledring init
+  ring.Begin();
+  ring.SetPixelColor(0, red); // status info: leds online!
+  ring.Show();
 
   // wifi access point opzetten indien nodig, anders verbinden met het eerder ingestelde netwerk
   setup_wifi();
 
+  ring.SetPixelColor(1, green); // status info: wifi online!
+  ring.Show();
+
   // tijd ophalen van een NTP server
   NTP.begin ("pool.ntp.org", 1, true, 0);
+  NTP.setInterval(10,3600);
 
-  //ledring init
-  ring.Begin();
+  ring.SetPixelColor(2, blue); // status info: NTP tijd sync gestart!
   ring.Show();
 
 }
@@ -86,7 +115,7 @@ void paint(RgbColor color) {
   // 's nachts zetten we de leds op zwart
   if (powersave()) { color = black;}
 
-    for (int x=0; x<PixelCount; x++) {
+    for (int x=0; x<PixelCount; x++) { //makkelijker: ring.clearTo(color);
       // this is where the magic happens
       ring.SetPixelColor(x, color); 
     }
@@ -102,7 +131,7 @@ void error(RgbColor color) {
   //  paint(black);
 
   // 3: informatieve maar irritante kleurtjes
-  // paint(color);
+  paint(color);
 }
 
 // de timestamps van buienradar terugrekenen naar seconden sinds middernacht
@@ -114,10 +143,10 @@ time_t decode(String hrs, String min) {
   //Neerslagintensiteit = 10^((waarde-109)/32), maar voor nu kijken we gewoon of het wel of niet 000 is
 void raincheck() {
   bool somerain = false;
-
   if(WiFi.status()== WL_CONNECTED){ //Check WiFi connection status
   
-    time_t ntpTime = NTP.getTime();
+    // time_t ntpTime = NTP.getTime(); //duurtlang
+    time_t ntpTime = now(); //sneller?
     if (ntpTime > 0) { //soms gaat het tijd syncen mis
       time_t nu = elapsedSecsToday(ntpTime) - 300;
       time_t straks = nu + 2100;
@@ -125,11 +154,15 @@ void raincheck() {
       HTTPClient http; //Declare an object of class HTTPClient
       String url = "http://gpsgadget.buienradar.nl/data/raintext/?lat=" + LAT + "&lon=" + LON;
       http.begin(url); //Specify request destination
-      int httpCode = http.GET(); //Send the request
+      int httpCode = http.GET(); //Send the request //duurtlang
       if (httpCode == 200 ) { //Check the returning code 
         String payload = http.getString(); //Get the request response payload
         Serial.println(payload); //Print the response payload
         boolean lineFound = false; // bijhouden of er wel data in het bericht zat (soms niet, ondanks de HTTP 200)
+        // reset nog wat globals (niet heel sjiek, bij een error kunnen we beter de oude state aanhouden)
+        codered = false;
+        totalrain = 0;
+        totalrainmm = 0.00;
 
         // read 24 lines
         for (int x=0; x<24; x++) {
@@ -138,9 +171,12 @@ void raincheck() {
           // kijk of de timestamp tussen nu en 30 minuten valt
           if (linetime > nu && linetime < straks) {
             lineFound = true;
-            Serial.println(payload.substring((x*11)+4, (x*11)+9));
             // als de eerste 3 karakters niet 000 zijn gaat het regenen!
             somerain = somerain || payload.substring(x*11, (x*11)+3) != "000";
+            totalrain = totalrain + payload.substring(x*11, (x*11)+3).toInt();
+            totalrainmm = totalrainmm + pow(10,((payload.substring(x*11, (x*11)+3).toInt()-109)/32));
+            codered = codered || pow(10,((payload.substring(x*11, (x*11)+3).toInt()-109)/32)) > 10; // meer dan 10 mm/u == stortbui
+            Serial.println(payload.substring((x*11)+4, (x*11)+9) + " " + pow(10,((payload.substring(x*11, (x*11)+3).toInt()-109)/32)));
           }
         }
         // hebben we relevante data gekregen?
@@ -148,10 +184,10 @@ void raincheck() {
           Serial.println(somerain ? "rain" : "no rain");
           // als het gaat regenen: zet alle pixels op blauw en zet de kleine led op de Wemos module aan. anders groen en uit.
           if (somerain) {
-            paint(blue);
+            // paint(blue); // vervangen door vet hippe animatie
             digitalWrite(BUILTIN_LED, 0);
           } else {
-            paint(green);
+            paint(allclear);
             digitalWrite(BUILTIN_LED, 1);
           } 
         } else {
@@ -175,13 +211,46 @@ void raincheck() {
   }
 }
 
+AnimUpdateCallback animUpdate = [=](const AnimationParam& param) {
+    // progress will start at 0.0 and end at 1.0
+    float hue = 0.666; // normaal blauw
+    if (codered) { hue = 0.0;} // rood bij stortbui
+    HslColor updatedColor = HslColor(hue,1.0,0.2-(param.progress/6));
+    ring.SetPixelColor(param.index, updatedColor);
+};
+
+
 // arduino conventie: de code in loop() wordt oneindig vaak uitgevoerd na het doorlopen van setup()
 void loop() {
-
-  Serial.println (NTP.getTimeDateString()); 
-
+  // Serial.println (NTP.getTimeDateString()); 
+  Serial.print(now());
+  Serial.print(" ");
+  Serial.print(hour());
+  Serial.print(":");
+  Serial.println(minute());
+  Serial.println(timeStatus()); // 0=timeNotSet, 1=timeNeedsSync, 2=timeSet
   raincheck();
-  delay(30000); //wacht 30 seconden en goto 10!
+  Serial.println(totalrain);
+  Serial.println(totalrainmm);
 
+  if (totalrain > 0 && !powersave()) {
+    // paint(black);
+    unsigned long t1 = millis();
+    while (millis() - t1 < 30000) {
+      //900/500 zwaar
+      //998/2000 licht
+      //totalrain loopt van 77 tot 1530 (max 255, min 77, keer 6)
+      if (random(1000)>(1004-totalrain/10)) {
+        animations.StartAnimation(random(PixelCount), 2000-totalrain, animUpdate);
+      }
+      animations.UpdateAnimations();  
+      ring.Show();
+      delay(1);
+      // now();//kietel klok
+    }
+  } else {
+    delay(30000); //wacht 30 seconden en goto 10! kleur is al gezet in raincheck
+    // API data ververst slechts elke 300 sec dus kan best minder vaak
+  }
 }
 
