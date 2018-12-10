@@ -54,7 +54,7 @@ void loop() {
     // ophogen teller voor animatie
     i++;
     Serial.println(i);
-
+    
     // hier wordt de buffer weggeschreven naar de ledstrip/ring
     ring.Show();
 
