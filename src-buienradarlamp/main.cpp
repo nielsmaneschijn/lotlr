@@ -79,8 +79,8 @@ void setup_wifi() {
 // arduino conventie: setup() wordt bij boot eenmalig uitgevoerd
 void setup() {
   
-  // Initialize the BUILTIN_LED pin as an output
-  pinMode(BUILTIN_LED, OUTPUT);     
+  // Initialize the LED_BUILTIN pin as an output
+  pinMode(LED_BUILTIN, OUTPUT);     
 
   // seriele poort openzetten voor debug data (zorg dat je terminal dezelfde baudrate gebruikt)
   Serial.begin(115200);
@@ -186,10 +186,10 @@ void raincheck() {
           // als het gaat regenen: zet alle pixels op blauw en zet de kleine led op de Wemos module aan. anders groen en uit.
           if (somerain) {
             // paint(blue); // vervangen door vet hippe animatie
-            digitalWrite(BUILTIN_LED, 0);
+            digitalWrite(LED_BUILTIN, 0);
           } else {
             paint(allclear);
-            digitalWrite(BUILTIN_LED, 1);
+            digitalWrite(LED_BUILTIN, 1);
           } 
         } else {
             Serial.println("no data :(");
