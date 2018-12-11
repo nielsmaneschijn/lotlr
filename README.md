@@ -45,3 +45,10 @@ Suggesties:
 - het is niet handig om steeds firmware updates via USB te moeten doen, dit kan ook via het netwerk (kan je de lampjes in je kerstboom laten hangen, en het gaat nog sneller ook). Bekijk hiervoor de EasyOTA library.
 - voeg een http server toe zodat je zelf een kleur kunt kiezen (pak aan, Philips Hue!)
 - je kunt WifiManager ook gebruiken om extra parameters in te stellen, zoals je GPS coordinaten.
+
+# Docs
+- https://www.arduino.cc/reference/en/
+- https://github.com/Makuna/NeoPixelBus/wiki
+- https://github.com/tzapu/WiFiManager
+- https://platformio.org/lib/show/1975/JeVe_EasyOTA
+- https://learn.adafruit.com/adafruit-neopixel-uberguide/best-practices (goede tips voor als je e.e.a. op de nette manier wilt doen of problemen hebt met je leds)
