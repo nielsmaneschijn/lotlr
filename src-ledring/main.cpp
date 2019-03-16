@@ -30,8 +30,8 @@ int i = 0; // teller voor opschuiven patroon
 // arduino conventie: setup() wordt bij boot eenmalig uitgevoerd
 void setup() {
   
-  // Initialize the BUILTIN_LED pin as an output
-  pinMode(BUILTIN_LED, OUTPUT);     
+  // Initialize the LED_BUILTIN pin as an output
+  pinMode(LED_BUILTIN, OUTPUT);     
 
   // seriele poort openzetten voor debug data (zorg dat je terminal dezelfde baudrate gebruikt)
   Serial.begin(115200);
