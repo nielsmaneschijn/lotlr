@@ -30,6 +30,7 @@ RgbColor white(colorSaturation);
 RgbColor black(0);
 
 int i = 0; // teller voor opschuiven patroon
+float j = 1;
 
 void setup_wifi() {
   WiFiManager wifiManager;
@@ -92,7 +93,7 @@ void setup() {
   setup_wifi();
   ring.SetPixelColor(1, green); // status info: wifi online!
   ring.Show();
-  
+
   setupOTA();
   ring.SetPixelColor(2, blue); // status info: OTA setup
   ring.Show();
@@ -122,9 +123,10 @@ void mode1(){
 void mode2(){
   // pink fluffy unicorn mode!
   for (int x=0; x<PixelCount; x++) {
-    ring.SetPixelColor(x, HslColor(fmodf((1.0F/PixelCount*x + i/10000.0F),1.0F), 1.0F, 0.5F));
+    ring.SetPixelColor(x, HslColor(fmodf((1.0F/PixelCount*x + j/10000.0F),1.0F), 1.0F, 0.5F));
   }
   ring.Show();
+  j=sin(1.0F*i/1000.0F)*10000.0F;
   i++;
 }
 
