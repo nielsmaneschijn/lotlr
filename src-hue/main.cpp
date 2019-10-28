@@ -35,6 +35,7 @@ HtmlColor htmlColor;
 
 int i = 0; // teller voor opschuiven patroon
 float j = 1;
+int mode = 0; // in welke modus zitten we?
 
 // maak een webserver op poort 80
 ESP8266WebServer server(80);
@@ -89,10 +90,13 @@ void handleRoot() {
     //   ring.SetPixelColor(0, htmlColor);
       ring.ClearTo(htmlColor);
       ring.Show();
+      mode = server.arg(1).toInt();
   }
   String page =  "<html><body><h1>Kies een kleur!</h1><form action=\"\"><input style=\"width: 300px; height: 300px; margin: 10px;\" name=\"color\" type=\"color\" onchange=\"javascript:this.form.submit()\" value=";
   page += server.arg(0);
-  page += "><input type=\"submit\"></form></body></html>";
+  page += "><h2>MODE SELEKTOR</h2><input type=\"range\" name=\"mode\" min=0 max=2 onchange=\"javascript:this.form.submit()\" value=";
+  page += server.arg(1);
+  page += "></form></body></html>";
   server.send(200, "text/html", page);
 }  
 
@@ -191,6 +195,11 @@ void mode2(){
 void loop() {
   ArduinoOTA.handle();
   server.handleClient();
-//   mode2();
+  if (mode == 1) {
+    mode1();
+  }
+  if (mode == 2) {
+    mode2();
+  }
 }
 
