@@ -14,7 +14,7 @@ Installeren ontwikkeltools:
 - installeer de NeoPixelBus, WifiManager en NtpClientLib libraries onder PIO Home -> Libraries -> Registry. Bekijk ook even de examples aldaar, de meeste libraries hebben goede voorbeelden.
 - (installeer espressif8266 onder Platforms indien deze er nog niet staat)
 - (installeer d1_mini onder Boards indien deze er nog niet staat)
-- clone deze repo ergens: git clone https://github.com/nielsmaneschijn/lotlr.git (alternatief als je geen git geïnstalleerd hebt: download de zip van https://github.com/nielsmaneschijn/lotlr/archive/master.zip)
+- clone deze repo ergens: git clone https://github.com/nielsmaneschijn/lotlr.git 
 
 Hello World: simpele test van je Neopixels
 - open de lotlr folder (File -> Open Folder)
@@ -29,6 +29,7 @@ Hello World: simpele test van je Neopixels
 - gebruik een yield() of delay(0) binnen je oneindige lus om de watchdog timer te resetten. Onthoud dit voor als je later in een reset-loop terechtkomt.
 
 Buienradarlamp: het internet op
+- bekijk http://gpsgadget.buienradar.nl/data/raintext/?lat=53.19&lon=6.56 , dit is de buienvoorspelling per 5 minuten voor een bepaalde plaats.
 - open platformio.ini
 - wijzig de src_dir in src-buienradarlamp
 - un-comment de WifiManager en NtpClientLib libraries (goede kans dat je de versie moet veranderen in 0.14 of gewoon weg kunt halen)
@@ -39,11 +40,25 @@ Buienradarlamp: het internet op
 - als de ESP geen netwerk kan vinden start hij op in de wifi access point mode (dankzij Wifimanager). Connect met dit access point (als het goed is redirect je automatisch naar 192.168.4.1) en vul de credentials van het wifi netwerk in. 
 - hierna reboot de ESP en als alles goed gegaan is is je buienradarlamp online!
 
+Maar ik heb al een buienradarlamp!
+Maak je eigen Hue lamp met webinterface:
+- open platformio.ini
+- wijzig de src_dir in src-hue
+- un-comment de WifiManager library
+- pas de const char* SSID aan zodat je weet welk access point van jou is en wat de hostname wordt
+- code builden en uploaden: ctrl-alt-u
+- als de ESP geen netwerk kan vinden start hij op in de wifi access point mode. Als je dit hierboven al ingevuld hebt gebeurt dit niet, de ESP onthoudt de netwerk credentials.
+- connect met http://ledring.local in je browser (of je zelf ingestelde hostname/SSID) en bestuur de lamp! Wanneer dit niet werkt: kijk met de debug terminal (stekker icoontje onderaan) welk ip-adres de lamp heeft gekregen en verbind hiermee.
+- pimp de UI of maak een coole animatie
+- mocht je thuis al Home Assistant en een MQTT bus hebben draaien voor je domotica, dan kan je deze firmware eens proberen: https://github.com/Dullage/ESP-LED-MQTT
+- ook leuk: https://learn.adafruit.com/adalight-diy-ambient-tv-lighting/
+
 Werkt alles? Dan kan je zelf verder aan de slag!
 Suggesties:
 - de NeoPixelBus library heeft uitgebreide mogelijkheden voor animaties, bekijk de examples hiervoor
-- het is niet handig om steeds firmware updates via USB te moeten doen, dit kan ook via het netwerk (kan je de lampjes in je kerstboom laten hangen, en het gaat nog sneller ook). Bekijk hiervoor de EasyOTA library.
-- voeg een http server toe zodat je zelf een kleur kunt kiezen (pak aan, Philips Hue!)
+- het is niet handig om steeds firmware updates via USB te moeten doen, dit kan ook via het netwerk (kan je de lampjes in je kerstboom laten hangen, en het gaat nog sneller ook). Bekijk hiervoor de de src-ledring-ota directory. Om dit werkend te krijgen moet je twee dingen aanpassen in platformio.ini:
+  - vul bij upload_port het ip-adres of hostname van je ESP in
+  - verander bij default-envs d1_mini in d1_mini_ota
 - je kunt WifiManager ook gebruiken om extra parameters in te stellen, zoals je GPS coordinaten.
 
 # Docs

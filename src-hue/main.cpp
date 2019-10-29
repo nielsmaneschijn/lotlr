@@ -16,6 +16,9 @@ const uint8_t PixelPin = 2;  // op de Esp8266 altijd de RX pin
 
 #define colorSaturation 64 // leds niet maximaal helder ivm stroomverbruik en fel aan de oogjes
 
+// geef dit een unieke naam als je je device wilt kunnen herkennen! Dit wordt ook de hostname ("ledring.local") dus geen spaties enzo
+const char* SSID = "ledring";
+
 // er zijn verschillende constructors voor verschillende varianten leds, met name de volgorde van de kleuren (ook de datapin hangt hiervan af)
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> ring(PixelCount, PixelPin); // GRB!
 // NeoPixelBus<NeoRgbFeature, Neo800KbpsMethod> ring(PixelCount, PixelPin); // RGB!
@@ -42,7 +45,7 @@ ESP8266WebServer server(80);
 
 void setup_wifi() {
   WiFiManager wifiManager;
-  wifiManager.autoConnect("Ledring");
+  wifiManager.autoConnect(SSID);
 }
 
 void setupOTA(){
@@ -51,7 +54,7 @@ void setupOTA(){
     // ArduinoOTA.setPort(8266);
 
     // Hostname defaults to esp8266-[ChipID]
-    ArduinoOTA.setHostname("ledring");
+    ArduinoOTA.setHostname(SSID);
 
     // No authentication by default
     // ArduinoOTA.setPassword((const char *)"123");
