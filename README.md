@@ -56,7 +56,8 @@ Maak je eigen Hue lamp met webinterface:
 Werkt alles? Dan kan je zelf verder aan de slag!
 Suggesties:
 - de NeoPixelBus library heeft uitgebreide mogelijkheden voor animaties, bekijk de examples hiervoor
-- het is niet handig om steeds firmware updates via USB te moeten doen, dit kan ook via het netwerk (kan je de lampjes in je kerstboom laten hangen, en het gaat nog sneller ook). Bekijk hiervoor de de src-ledring-ota directory. Om dit werkend te krijgen moet je twee dingen aanpassen in platformio.ini:
+- het is niet handig om steeds firmware updates via USB te moeten doen, dit kan ook via het netwerk (kan je de lampjes in je kerstboom laten hangen, en het gaat nog sneller ook). Bekijk hiervoor de de src-ledring-ota directory. Om dit werkend te krijgen moet je drie dingen aanpassen in platformio.ini voordat je op upload drukt:
+  - verander src_dir in src-ledring-ota
   - vul bij upload_port het ip-adres of hostname van je ESP in
   - verander bij default-envs d1_mini in d1_mini_ota
 - je kunt WifiManager ook gebruiken om extra parameters in te stellen, zoals je GPS coordinaten.
