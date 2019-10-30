@@ -14,7 +14,7 @@ RX -> DI (data in) (geel draadje)
 const uint16_t PixelCount = 12; // aantal leds
 const uint8_t PixelPin = 2;  // op de Esp8266 altijd de RX pin
 
-#define colorSaturation 64 // leds niet maximaal helder ivm stroomverbruik en fel aan de oogjes
+#define colorSaturation 255 // leds niet maximaal helder ivm stroomverbruik en fel aan de oogjes
 
 // geef dit een unieke naam als je je device wilt kunnen herkennen! Dit wordt ook de hostname ("ledring.local") dus geen spaties enzo
 const char* SSID = "ledring";
@@ -34,11 +34,14 @@ RgbColor blue(0, 0, colorSaturation);
 RgbColor white(colorSaturation);
 RgbColor black(0);
 
+String color;
 HtmlColor htmlColor;
+HslColor hslColor;
 
 int i = 0; // teller voor opschuiven patroon
 float j = 1;
 int mode = 0; // in welke modus zitten we?
+float brightness = 1.0;
 
 // maak een webserver op poort 80
 ESP8266WebServer server(80);
@@ -86,19 +89,20 @@ void setupOTA(){
 }
 
 void handleRoot() {
-  if (server.args()>0) {
-      const String color = server.arg(0);
-      Serial.println(color);
-      htmlColor.Parse<HtmlColorNames>(color);
-    //   ring.SetPixelColor(0, htmlColor);
-      ring.ClearTo(htmlColor);
-      ring.Show();
-      mode = server.arg(1).toInt();
+  for (uint8_t i=0; i<server.args(); i++){
+    if (server.argName(i) == "color") {color = server.arg(i);};
+    if (server.argName(i) == "mode") {mode = server.arg(i).toInt();};
+    if (server.argName(i) == "brightness") {brightness = server.arg(i).toFloat();};
   }
+  // Serial.println(color);
+
+
   String page =  "<html><body><h1>Kies een kleur!</h1><form action=\"\"><input style=\"width: 300px; height: 300px; margin: 10px;\" name=\"color\" type=\"color\" onchange=\"javascript:this.form.submit()\" value=";
-  page += server.arg(0);
+  page += color;
   page += "><h2>MODE SELEKTOR</h2><input type=\"range\" name=\"mode\" min=0 max=2 onchange=\"javascript:this.form.submit()\" value=";
-  page += server.arg(1);
+  page += mode;
+  page += "><h2>Brightness</h2><input type=\"range\" name=\"brightness\" min=0 max=1 step=0.01 onchange=\"javascript:this.form.submit()\" value=";
+  page += brightness;
   page += "></form></body></html>";
   server.send(200, "text/html", page);
 }  
@@ -163,12 +167,18 @@ void setup() {
   ring.Show();
 }
 
+void mode0(){
+  htmlColor.Parse<HtmlColorNames>(color);
+  ring.ClearTo(htmlColor);
+  ring.Show();
+}
+
 void mode1(){
    for (int x=0; x<PixelCount; x++) { 
       // geef wat pixels een kleur
-      if ((x + i) % 3 == 0) { ring.SetPixelColor(x, red); } 
-      if ((x + i) % 3 == 1) { ring.SetPixelColor(x, green); } 
-      if ((x + i) % 3 == 2) { ring.SetPixelColor(x, blue); } 
+      if ((x + i) % 3 == 0) { ring.SetPixelColor(x, HslColor::LinearBlend<NeoHueBlendShortestDistance>(HslColor(black), HslColor(red), brightness)); } 
+      if ((x + i) % 3 == 1) { ring.SetPixelColor(x, HslColor::LinearBlend<NeoHueBlendShortestDistance>(HslColor(black), HslColor(green), brightness)); } 
+      if ((x + i) % 3 == 2) { ring.SetPixelColor(x, HslColor::LinearBlend<NeoHueBlendShortestDistance>(HslColor(black), HslColor(blue), brightness)); } 
     }
     
     // ophogen teller voor animatie
@@ -187,7 +197,7 @@ void mode1(){
 void mode2(){
   // pink fluffy unicorn mode!
   for (int x=0; x<PixelCount; x++) {
-    ring.SetPixelColor(x, HslColor(fmodf((1.0F/PixelCount*x + j/10000.0F),1.0F), 1.0F, 0.5F));
+    ring.SetPixelColor(x, HslColor(fmodf((1.0F/PixelCount*x + j/10000.0F),1.0F), 1.0F, brightness));
   }
   ring.Show();
   j=sin(1.0F*i/1000.0F)*10000.0F;
@@ -198,6 +208,9 @@ void mode2(){
 void loop() {
   ArduinoOTA.handle();
   server.handleClient();
+  if (mode == 0) {
+    mode0();
+  }
   if (mode == 1) {
     mode1();
   }
