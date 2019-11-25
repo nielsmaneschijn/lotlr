@@ -25,14 +25,14 @@ const uint8_t PixelPin = 2;  // op de Esp8266 altijd de RX pin
 #define colorSaturation 64 // leds niet maximaal helder ivm stroomverbruik en fel aan de oogjes
 
 // geef dit een unieke naam als je je device wilt kunnen herkennen!
-const char* SSID = "Pretty fly for a wifi";
+const char* SSID = "buienradar";
 // stel hier de coordinaten van je crib in! (2 decimalen achter de komma)
 //Wolddijk
 // const String LAT = "53.25";
 // const String LON = "6.57";
 //Enshore HQ
-const String LAT = "53.19";
-const String LON = "6.56";
+const String LAT = "53.13";
+const String LON = "6.60";
 
 // er zijn verschillende constructors voor verschillende varianten leds, met name de volgorde van de kleuren (ook de datapin hangt hiervan af)
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> ring(PixelCount, PixelPin); // GRB!
@@ -253,7 +253,7 @@ void loop() {
       paint(black); // voor als het nog regent als het power save interval ingaat, of als er dan gereset wordt
     }
   } else {
-    delay(30000); //wacht 30 seconden en goto 10! kleur is al gezet in raincheck
+    delay(90000); //wacht 90 seconden en goto 10! kleur is al gezet in raincheck
     // API data ververst slechts elke 300 sec dus kan best minder vaak
   }
 }
