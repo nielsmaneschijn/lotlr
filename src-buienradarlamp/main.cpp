@@ -8,7 +8,7 @@ TODO
 - OTA update met EasyOTA
 - etc etc
 */
-
+#include <Arduino.h>
 // http client om buienradar api mee aan te roepen
 #include <ESP8266HTTPClient.h>
 // wifimanager maakt een access point om je wifi credentials mee in te kunnen stellen
@@ -153,8 +153,9 @@ void raincheck() {
       time_t straks = nu + 2100;
 
       HTTPClient http; //Declare an object of class HTTPClient
-      String url = "http://gpsgadget.buienradar.nl/data/raintext/?lat=" + LAT + "&lon=" + LON;
-      http.begin(url); //Specify request destination
+      http.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
+      String url = "https://br-gpsgadget.azurewebsites.net/data/raintext?lat=" + LAT + "&lon=" + LON;
+      http.begin(url,"39 8E 01 A5 0C 66 8A 74 F0 10 4A 83 60 15 A2 6E 21 55 4C CE"); //Specify request destination and SHA fingerprint, zie https://forum.arduino.cc/index.php?topic=515541.0
       int httpCode = http.GET(); //Send the request //duurtlang
       if (httpCode == 200 ) { //Check the returning code 
         String payload = http.getString(); //Get the request response payload
@@ -198,6 +199,7 @@ void raincheck() {
         
       } else {
         Serial.println("geen http 200");   
+        Serial.println(httpCode);
         error(yellow);
       }
 
