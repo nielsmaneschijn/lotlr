@@ -11,6 +11,8 @@ TODO
 #include <Arduino.h>
 // http client om buienradar api mee aan te roepen
 #include <ESP8266HTTPClient.h>
+#include <WiFiClientSecureBearSSL.h>
+// #include <ESP8266WiFi.h>
 // wifimanager maakt een access point om je wifi credentials mee in te kunnen stellen
 #include <WiFiManager.h>  
 // NTP client om de tijd op te halen (hier krijg je Time.h bij)
@@ -19,7 +21,7 @@ TODO
 #include <NeoPixelBus.h>
 #include <NeoPixelAnimator.h>
 
-const uint16_t PixelCount = 12; // aantal leds
+const uint16_t PixelCount = 64; // aantal leds
 const uint8_t PixelPin = 2;  // op de Esp8266 altijd de RX pin
 
 #define colorSaturation 64 // leds niet maximaal helder ivm stroomverbruik en fel aan de oogjes
@@ -28,11 +30,11 @@ const uint8_t PixelPin = 2;  // op de Esp8266 altijd de RX pin
 const char* SSID = "buienradar";
 // stel hier de coordinaten van je crib in! (2 decimalen achter de komma)
 //Wolddijk
-// const String LAT = "53.25";
-// const String LON = "6.57";
+const String LAT = "53.25";
+const String LON = "6.57";
 //Enshore HQ
-const String LAT = "53.13";
-const String LON = "6.60";
+// const String LAT = "53.19";
+// const String LON = "6.56";
 
 // er zijn verschillende constructors voor verschillende varianten leds, met name de volgorde van de kleuren (ook de datapin hangt hiervan af)
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> ring(PixelCount, PixelPin); // GRB!
@@ -50,7 +52,7 @@ RgbColor white(colorSaturation);
 RgbColor black(0);
 
 // kleur als het niet regent
-RgbColor allclear = green;
+RgbColor allclear = black;
 
 // wanneer staat 'ie aan
 const int poweron = 7; //aan om 7u
@@ -131,7 +133,8 @@ void error(RgbColor color) {
   //  paint(black);
 
   // 3: informatieve maar irritante kleurtjes
-  paint(color);
+  // paint(color);
+  ring.SetPixelColor(0, color);
   delay(3000);
 }
 
@@ -152,10 +155,16 @@ void raincheck() {
       time_t nu = elapsedSecsToday(ntpTime) - 300;
       time_t straks = nu + 2100;
 
+      // TODO dit hoeft op zich maar 1x te gebeuren lijkt me
       HTTPClient http; //Declare an object of class HTTPClient
-      http.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
+      // http.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
       String url = "https://br-gpsgadget.azurewebsites.net/data/raintext?lat=" + LAT + "&lon=" + LON;
-      http.begin(url,"39 8E 01 A5 0C 66 8A 74 F0 10 4A 83 60 15 A2 6E 21 55 4C CE"); //Specify request destination and SHA fingerprint, zie https://forum.arduino.cc/index.php?topic=515541.0
+      // expliciet client maken en configgen zodat https cert niet gevalideerd wordt en je geen fingerprint nodig hebt
+      BearSSL::WiFiClientSecure client;
+      client.setInsecure();
+      http.begin(client, url);
+
+      // http.begin(url,"39 8E 01 A5 0C 66 8A 74 F0 10 4A 83 60 15 A2 6E 21 55 4C CE"); //Specify request destination and SHA fingerprint, zie https://forum.arduino.cc/index.php?topic=515541.0
       int httpCode = http.GET(); //Send the request //duurtlang
       if (httpCode == 200 ) { //Check the returning code 
         String payload = http.getString(); //Get the request response payload
