@@ -30,11 +30,12 @@ const uint8_t PixelPin = 2;  // op de Esp8266 altijd de RX pin
 const char* SSID = "buienradar";
 // stel hier de coordinaten van je crib in! (2 decimalen achter de komma)
 //Wolddijk
-const String LAT = "53.25";
-const String LON = "6.57";
+// const String LAT = "53.25";
+// const String LON = "6.57";
+// const String LON = "6.60";
 //Enshore HQ
-// const String LAT = "53.19";
-// const String LON = "6.56";
+const String LAT = "53.19";
+const String LON = "6.56";
 
 // er zijn verschillende constructors voor verschillende varianten leds, met name de volgorde van de kleuren (ook de datapin hangt hiervan af)
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> ring(PixelCount, PixelPin); // GRB!
@@ -52,11 +53,11 @@ RgbColor white(colorSaturation);
 RgbColor black(0);
 
 // kleur als het niet regent
-RgbColor allclear = black;
+RgbColor allclear = green;
 
 // wanneer staat 'ie aan
-const int poweron = 7; //aan om 7u
-const int poweroff = 23; //uit om 23u
+const int poweron = 8; //aan om 7u
+const int poweroff = 18; //uit om 23u
 
 // totaal regenintensiteit in vage log eenheid
 int totalrain = 0;
