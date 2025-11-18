@@ -21,7 +21,7 @@ TODO
 #include <NeoPixelBus.h>
 #include <NeoPixelAnimator.h>
 
-const uint16_t PixelCount = 64; // aantal leds
+const uint16_t PixelCount = 72; // aantal leds
 const uint8_t PixelPin = 2;  // op de Esp8266 altijd de RX pin
 
 #define colorSaturation 64 // leds niet maximaal helder ivm stroomverbruik en fel aan de oogjes
@@ -34,8 +34,8 @@ const char* SSID = "buienradar";
 // const String LON = "6.57";
 // const String LON = "6.60";
 //Enshore HQ
-const String LAT = "53.19";
-const String LON = "6.56";
+const String LAT = "53.18";
+const String LON = "6.54";
 
 // er zijn verschillende constructors voor verschillende varianten leds, met name de volgorde van de kleuren (ook de datapin hangt hiervan af)
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> ring(PixelCount, PixelPin); // GRB!
@@ -159,10 +159,13 @@ void raincheck() {
       // TODO dit hoeft op zich maar 1x te gebeuren lijkt me
       HTTPClient http; //Declare an object of class HTTPClient
       // http.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
-      String url = "https://br-gpsgadget.azurewebsites.net/data/raintext?lat=" + LAT + "&lon=" + LON;
+      // String url = "https://br-gpsgadget.azurewebsites.net/data/raintext?lat=" + LAT + "&lon=" + LON;
+      String url = "https://gadgets.buienradar.nl/data/raintext/?lat=" + LAT + "&lon=" + LON;
+      // String url = "https://gps.buienradar.nl/getrr.php?lat=" + LAT + "&lon=" + LON; // de eigenlijke url die je nu redirect
       // expliciet client maken en configgen zodat https cert niet gevalideerd wordt en je geen fingerprint nodig hebt
       BearSSL::WiFiClientSecure client;
       client.setInsecure();
+    
       http.begin(client, url);
 
       // http.begin(url,"39 8E 01 A5 0C 66 8A 74 F0 10 4A 83 60 15 A2 6E 21 55 4C CE"); //Specify request destination and SHA fingerprint, zie https://forum.arduino.cc/index.php?topic=515541.0
@@ -179,16 +182,17 @@ void raincheck() {
         // read 24 lines
         for (int x=0; x<24; x++) {
           // pluk de tijd uit de dataregel
-          time_t linetime = decode(payload.substring((x*11)+4, (x*11)+6), payload.substring((x*11)+7, (x*11)+9));
+          // assumption: 10 bytes per regel (gaat al stuk als een CRLF een CR wordt)
+          time_t linetime = decode(payload.substring((x*10)+4, (x*10)+6), payload.substring((x*10)+7, (x*10)+9));
           // kijk of de timestamp tussen nu en 30 minuten valt
           if (linetime > nu && linetime < straks) {
             lineFound = true;
             // als de eerste 3 karakters niet 000 zijn gaat het regenen!
-            somerain = somerain || payload.substring(x*11, (x*11)+3) != "000";
-            totalrain = totalrain + payload.substring(x*11, (x*11)+3).toInt();
-            totalrainmm = totalrainmm + pow(10,((payload.substring(x*11, (x*11)+3).toInt()-109)/32));
-            codered = codered || pow(10,((payload.substring(x*11, (x*11)+3).toInt()-109)/32)) > 10; // meer dan 10 mm/u == stortbui
-            Serial.println(payload.substring((x*11)+4, (x*11)+9) + " " + pow(10,((payload.substring(x*11, (x*11)+3).toInt()-109)/32)));
+            somerain = somerain || payload.substring(x*10, (x*10)+3) != "000";
+            totalrain = totalrain + payload.substring(x*10, (x*10)+3).toInt();
+            totalrainmm = totalrainmm + pow(10,((payload.substring(x*10, (x*10)+3).toInt()-109)/32));
+            codered = codered || pow(10,((payload.substring(x*10, (x*10)+3).toInt()-109)/32)) > 10; // meer dan 10 mm/u == stortbui
+            Serial.println(payload.substring((x*10)+4, (x*10)+9) + " " + pow(10,((payload.substring(x*10, (x*10)+3).toInt()-109)/32)));
           }
         }
         // hebben we relevante data gekregen?
